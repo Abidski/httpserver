@@ -1,0 +1,8 @@
+﻿
+class Server
+{
+    public Server()
+    {
+        
+    }
+}
