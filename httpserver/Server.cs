@@ -6,11 +6,12 @@ using httpserver;
 class Server
 {
     private TcpListener _listener;
+    private HttpResponse response;
     private bool isRunning;
     public Server()
     {
-         _listener = new TcpListener(IPAddress.Any, 8080);
-         isRunning = true;
+        _listener = new TcpListener(IPAddress.Any, 8080);
+        isRunning = true;
     }
 
     public async Task Start()
@@ -33,8 +34,7 @@ class Server
             using (var reader = new StreamReader(stream))
             using (var writer = new StreamWriter(stream))
             {
-                await ParseRequest(reader);
-         
+                await HandleRequest(reader, writer);
             }
         }
         catch
@@ -43,20 +43,21 @@ class Server
         }
     }
 
-    private async Task ParseRequest(StreamReader reader)
+    private async Task HandleRequest(StreamReader reader, StreamWriter writer)
     {
         try
         {
             var reqLine = await reader.ReadLineAsync();
             CheckMethod(reqLine);
-            
+
             while (!string.IsNullOrEmpty(reqLine))
             {
                 reqLine = await reader.ReadLineAsync();
                 CheckHeader(reqLine);
             }
+            SendResponse(writer);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Console.WriteLine("Error in Parse Request");
             Console.WriteLine(e.Message);
@@ -66,28 +67,29 @@ class Server
 
     private void CheckMethod(string line)
     {
-        string [] words = line.Split(' ');
+        string[] words = line.Split(' ');
         switch (words[0])
         {
-           case "GET":
-               Console.WriteLine("Get method");
-               HandleGet(words);
-               break;
-           case "POST":
-               break;
+            case "GET":
+                Console.WriteLine("Get method");
+                HandleGet(words);
+                break;
+            case "POST":
+                break;
             case "PUT":
-               break;
-           case "PATCH":
-               break;
-           case "DELETE":
-               break;
+                break;
+            case "PATCH":
+                break;
+            case "DELETE":
+                break;
         }
 
     }
 
     private void CheckHeader(string line)
     {
-        
+
+
     }
 
     private void HandleGet(string[] reqLine)
@@ -96,10 +98,11 @@ class Server
         var uri = reqLine[1];
         var version = reqLine[2];
         var httpRequest = new HttpRequest(method, uri, version);
-        string body;
-        int code;
-        
-        switch(uri)
+        string body = "None";
+        int code = 0;
+        string phrase = "None";
+
+        switch (uri)
         {
             case "/":
                 code = 200;
@@ -125,17 +128,58 @@ class Server
                             <a href='/json'>JSON Response Example</a>
                         </div>
                     </body>
-                    </html>
-                        ";
+                    </html>";
+                phrase = "OK";
+
                 break;
-            case "/about": 
+            case "/about":
+                code = 200;
+                body = @"
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>About</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>About This Server</h1>
+                        <p>This HTTP server was built from scratch using:</p>
+                        <ul>
+                            <li>C# TcpListener for socket connections</li>
+                            <li>Manual HTTP request parsing</li>
+                            <li>Custom response generation</li>
+                        </ul>
+                        <a href='/'>Back to Home</a>
+                    </body>
+                    </html>";
+                phrase = "OK";
                 break;
             default:
+                code = 404;
+                body = @"
+                    <html>
+                        <head>
+                            <title>Resource Not Found</title>
+                        </head>
+                        <body>
+                            <p>The resource you requested has not been found at the specified address. Please check the spelling of the address.
+                            </p>
+                        </body>
+                    </html>";
+                phrase = "Not Found";
                 break;
-                
-            
         }
+        this.response = new HttpResponse(code, version, phrase, body);
+
+
 
     }
-        
+
+    private async void SendResponse(StreamWriter writer)
+    {
+        await writer.WriteAsync(response.ToString());
+    }
+
 }
