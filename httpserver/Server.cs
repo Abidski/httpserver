@@ -34,9 +34,6 @@ class Server
             using (var writer = new StreamWriter(stream))
             {
                 await ParseRequest(reader);
-                var message = "HTTP/1.1 200 OK\nContent-Type: text/plain; charset=utf-8\nContent-Length: 12\n\nHello World!";
-                var dateTimeBytes = Encoding.UTF8.GetBytes(message);
-                await stream.WriteAsync(dateTimeBytes);
          
             }
         }
@@ -98,7 +95,46 @@ class Server
         var method = reqLine[0];
         var uri = reqLine[1];
         var version = reqLine[2];
-        var HttpReq = new HttpRequest(method, uri, version);
+        var httpRequest = new HttpRequest(method, uri, version);
+        string body;
+        int code;
+        
+        switch(uri)
+        {
+            case "/":
+                code = 200;
+                body = @"
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>HTTP Server from Scratch</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+                            h1 { color: #333; }
+                            .links { margin-top: 20px; }
+                            a { display: block; margin: 10px 0; color: #0066cc; text-decoration: none; }
+                            a:hover { text-decoration: underline; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Welcome to the HTTP Server!</h1>
+                        <p>This is a simple HTTP server built from scratch using C# and TCP sockets.</p>
+                        <div class='links'>
+                            <a href='/about'>About Page</a>
+                            <a href='/time'>Current Server Time</a>
+                            <a href='/json'>JSON Response Example</a>
+                        </div>
+                    </body>
+                    </html>
+                        ";
+                break;
+            case "/about": 
+                break;
+            default:
+                break;
+                
+            
+        }
 
     }
         
